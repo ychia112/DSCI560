@@ -14,20 +14,20 @@ from PIL import Image
 
 # Utils
 
-def ensure_outdir(path: str = "outputs") -> Path:
+def ensure_outdir(path: str = "outputs"):   # create dir if needed
     p = Path(path)
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
-def print_head(df: pd.DataFrame, n: int = 5, title: str = "") -> None:
+def print_head(df: pd.DataFrame, n: int = 5, title: str = ""): # print first n rows
     print(f"\n=== {title}: first {n} rows ===")
     try:
         print(df.head(n).to_string(index=False))
     except Exception:
         print(df.head(n))
     
-def summarize_df(df: pd.DataFrame, name: str = "DataFrame") -> None:
+def summarize_df(df: pd.DataFrame, name: str = "DataFrame"): # basic summary
     print(f"\n--- Summary: {name} ---")
     print("Shape:", df.shape)
     print("Columns:", list(df.columns))
@@ -44,7 +44,7 @@ def summarize_df(df: pd.DataFrame, name: str = "DataFrame") -> None:
         
 # (i) CSV/Excel — Finance prices via yfinance
 
-def run_csv_part(ticker: str, period: str, interval: str, outdir: Path) -> None:
+def run_csv_part(ticker: str, period: str, interval: str, outdir: Path):
     print(f"\n[CSV] Downloading {ticker} ({period}, {interval}) via yfinance …")
     df = yf.download(ticker, period=period, interval=interval, auto_adjust=False, progress=False)
     if df is None or df.empty:
@@ -60,17 +60,22 @@ def run_csv_part(ticker: str, period: str, interval: str, outdir: Path) -> None:
 
 # (ii) ASCII/HTML — simple text scraping
 
-def extract_visible_text_from_html(html: str) -> str:
+def extract_visible_text_from_html(html: str):
     soup = BeautifulSoup(html, "html.parser")
-    paras = [p.get_text(" ", strip=True) for p in soup.find_all("p")]
-    if len(paras) < 3:  # fallback if page uses other tags
+    paras = [p.get_text(" ", strip=True) for p in soup.find_all("p")] # extract <p> tags to get paragraphs content
+    if len(paras) < 3:  # fallback if page uses other tags for main content
         text = soup.get_text(" ", strip=True)
         return text
     return "\n\n".join(paras)
 
-def run_html_part(url: str, outdir: Path) -> None:
+def run_html_part(url: str, outdir: Path):
     print(f"\n[HTML] Fetching: {url}")
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; DSCI560-Lab2/1.0)"}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
     r = requests.get(url, headers=headers, timeout=30)
     r.raise_for_status()
     text = extract_visible_text_from_html(r.text)
@@ -167,7 +172,7 @@ def parse_args():
 
     # HTML param (use a stable HTML page; SEC filing HTML works well)
     ap.add_argument("--html_url",
-                    default="https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm",
+                    default="https://www.cnn.com/markets/stocks/AAPL",
                     help="Public HTML page to extract text from")
 
     # PDF param (use a public PDF; IRS publications are stable)
